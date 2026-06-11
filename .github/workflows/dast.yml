@@ -80,7 +80,7 @@ jobs:
         # if: always() → upload le rapport même si ZAP a détecté des alertes
         # Sans ça le rapport ne serait pas uploadé en cas d'échec
         with:
-          name: zap-scan-report
+          name: zap_scan_report
           path: report_html.html
           # Le rapport HTML complet est sauvegardé comme artifact GitHub
           # Accessible dans l'onglet Actions → workflow run → Artifacts
