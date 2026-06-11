@@ -31,6 +31,7 @@ jobs:
       # Permet de publier les résultats dans l'onglet Security
       issues: write
       # Permet à ZAP de créer des issues GitHub pour chaque alerte détectée
+      actions: write
 
     steps:
 
@@ -52,7 +53,7 @@ jobs:
         # Sans ce délai ZAP tenterait de scanner une app pas encore prête
 
       - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
+        uses: zaproxy/action-baseline@v0.14.0
         with:
           target: "http://localhost:3000"
           # URL de l'application à scanner — Juice Shop tourne localement
@@ -73,6 +74,7 @@ jobs:
           # fail_action: true bloquerait TOUS les merges sans exception
           # Dans un projet réel on définirait un seuil par sévérité :
           # bloquer sur HIGH/CRITICAL, documenter LOW/MEDIUM
+          allow_issue_writing: false
 
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
@@ -80,7 +82,7 @@ jobs:
         # if: always() → upload le rapport même si ZAP a détecté des alertes
         # Sans ça le rapport ne serait pas uploadé en cas d'échec
         with:
-          name: zap-scan-report
+          name: zap_scan_report
           path: report_html.html
           # Le rapport HTML complet est sauvegardé comme artifact GitHub
           # Accessible dans l'onglet Actions → workflow run → Artifacts
