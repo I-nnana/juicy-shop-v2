@@ -1,0 +1,66 @@
+name: SAST - CodeQL Analysis
+
+on:
+  
+  pull_request:
+    branches:
+      - staging
+      - main
+  
+  push:
+    branches:
+      - staging
+
+jobs:
+  codeql-analysis:
+    name: CodeQL Scan
+    
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      # Permet au workflow de lire les autres workflows (nécessaire pour CodeQL)
+      contents: read
+      # Permet de lire le code source du repo
+      security-events: write
+      # Permet à CodeQL de publier ses résultats dans l'onglet Security
+      # Sans ça, le scan tourne mais les alertes n'apparaissent pas
+
+    strategy:
+      fail-fast: false
+      # Si tu ajoutes plusieurs langages dans matrix, un échec sur l'un
+      # n'arrête pas le scan des autres
+      matrix:
+        language: ["javascript-typescript"]
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # Étape 1 : clone le repo sur la machine virtuelle
+        # Sans ça CodeQL n'a pas accès au code
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          language: ${{ matrix.language }}
+          queries: security-extended
+          # Pack de requêtes utilisé pour l'analyse
+          # security-extended > security-and-quality (défaut) :
+          # couvre plus de vecteurs d'attaque (XSS, injection, path traversal...)
+          # au prix d'un temps de scan légèrement plus long
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+        # Étape 3 : CodeQL essaie de compiler le projet automatiquement
+        # Pour JS/TS ce n'est pas strictement nécessaire (pas de compilation)
+        # mais ça permet à CodeQL de mieux comprendre la structure du code
+        # et d'améliorer la précision de l'analyse
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+          # Étape 4 : lance l'analyse et publie les résultats
+          # La category permet de distinguer les résultats par langage
+          # dans l'onglet Security si tu as plusieurs langages

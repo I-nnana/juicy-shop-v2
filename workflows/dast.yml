@@ -1,0 +1,87 @@
+name: DAST - OWASP ZAP Analysis
+# Nom du workflow affiché dans l'onglet Actions de GitHub
+# DAST = Dynamic Application Security Testing
+# Contrairement au SAST, ZAP teste l'application EN COURS D'EXECUTION
+
+on:
+  # Déclencheurs identiques au SAST pour une couverture cohérente
+  
+  pull_request:
+    branches:
+      - staging
+      - main
+    # Se déclenche sur toute PR vers staging ou main
+    # Point de contrôle avant merge : on scanne avant d'intégrer
+
+  push:
+    branches:
+      - staging
+    # Filet de sécurité sur le code déjà mergé dans staging
+
+jobs:
+  zap-scan:
+    name: OWASP ZAP Scan
+    runs-on: ubuntu-latest
+    # Machine virtuelle Ubuntu fournie par GitHub, gratuite sur repo public
+
+    permissions:
+      contents: read
+      # Permet de lire le code source pour le checkout
+      security-events: write
+      # Permet de publier les résultats dans l'onglet Security
+      issues: write
+      # Permet à ZAP de créer des issues GitHub pour chaque alerte détectée
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # Clone le repo sur la machine virtuelle
+        # Nécessaire pour accéder au fichier de règles ZAP (.zap/rules.tsv)
+
+      - name: Start Juice Shop
+        run: |
+          docker pull bkimminich/juice-shop
+          docker run -d -p 3000:3000 --name juice-shop bkimminich/juice-shop
+          sleep 30
+        # ÉTAPE CLÉ DU DAST : on lance l'application pour pouvoir l'attaquer
+        # docker pull : récupère l'image officielle de Juice Shop
+        # docker run -d : lance le container en arrière-plan (detached)
+        # -p 3000:3000 : expose le port 3000 du container sur la machine virtuelle
+        # sleep 30 : attend 30 secondes que l'app soit complètement démarrée
+        # Sans ce délai ZAP tenterait de scanner une app pas encore prête
+
+      - name: OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "http://localhost:3000"
+          # URL de l'application à scanner — Juice Shop tourne localement
+          
+          rules_file_name: ".zap/rules.tsv"
+          # Fichier de configuration des règles ZAP
+          # Permet d'ignorer certaines alertes connues ou hors scope
+          
+          cmd_options: "-a"
+          # -a : active le scan actif (active scan)
+          # Le scan actif envoie des requêtes malformées pour détecter
+          # les vulnérabilités (XSS, injections, etc.)
+          # Plus lent que le scan passif mais plus complet
+          
+          fail_action: false
+          # NE PAS bloquer le workflow en cas d'alertes détectées
+          # Justification : Juice Shop est volontairement vulnérable
+          # fail_action: true bloquerait TOUS les merges sans exception
+          # Dans un projet réel on définirait un seuil par sévérité :
+          # bloquer sur HIGH/CRITICAL, documenter LOW/MEDIUM
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        # if: always() → upload le rapport même si ZAP a détecté des alertes
+        # Sans ça le rapport ne serait pas uploadé en cas d'échec
+        with:
+          name: zap-scan-report
+          path: report_html.html
+          # Le rapport HTML complet est sauvegardé comme artifact GitHub
+          # Accessible dans l'onglet Actions → workflow run → Artifacts
+          # Contient le détail de chaque vulnérabilité détectée avec sa sévérité
