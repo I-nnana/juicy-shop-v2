@@ -72,3 +72,15 @@ export function searchProducts () {
   }
 }
 // vuln-code-snippet end unionSqlInjectionChallenge dbSchemaChallenge
+// Vulnerable search by user ID - DO NOT USE IN PRODUCTION
+export function searchUserById () {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const userId = req.query.userId
+    models.sequelize.query(`SELECT * FROM Users WHERE id = '${userId}'`)
+      .then(([users]: any) => {
+        res.json(users)
+      }).catch((error: Error) => {
+        next(error)
+      })
+  }
+}
