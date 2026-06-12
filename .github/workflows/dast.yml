@@ -77,7 +77,7 @@ jobs:
           allow_issue_writing: false
 
       - name: Upload ZAP Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         # if: always() → upload le rapport même si ZAP a détecté des alertes
         # Sans ça le rapport ne serait pas uploadé en cas d'échec
