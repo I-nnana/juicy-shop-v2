@@ -36,7 +36,7 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         # Étape 1 : clone le repo sur la machine virtuelle
         # Sans ça CodeQL n'a pas accès au code
 
