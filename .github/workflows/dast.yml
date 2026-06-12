@@ -53,7 +53,7 @@ jobs:
         # Sans ce délai ZAP tenterait de scanner une app pas encore prête
 
       - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.14.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
           target: "http://localhost:3000"
           # URL de l'application à scanner — Juice Shop tourne localement
