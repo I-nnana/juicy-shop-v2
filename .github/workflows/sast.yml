@@ -41,7 +41,7 @@ jobs:
         # Sans ça CodeQL n'a pas accès au code
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4.37.4
         with:
           language: ${{ matrix.language }}
           queries: security-extended
@@ -51,14 +51,14 @@ jobs:
           # au prix d'un temps de scan légèrement plus long
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4.37.4
         # Étape 3 : CodeQL essaie de compiler le projet automatiquement
         # Pour JS/TS ce n'est pas strictement nécessaire (pas de compilation)
         # mais ça permet à CodeQL de mieux comprendre la structure du code
         # et d'améliorer la précision de l'analyse
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4.37.4
         with:
           category: "/language:${{ matrix.language }}"
           # Étape 4 : lance l'analyse et publie les résultats
